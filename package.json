@@ -1,6 +1,6 @@
 {
   "name": "wingbot-daktela",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Daktela connector for wingbot.ai",
   "main": "src/main.js",
   "scripts": {

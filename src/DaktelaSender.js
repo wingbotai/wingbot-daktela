@@ -164,17 +164,19 @@ class DaktelaSender extends ReturnSender {
             'Content-type': 'application/json; charset:utf-8'
         };
 
-        const body = JSON.stringify(transformed);
-
         const data = {
             uri: this._conversation.response_url,
             headers,
             method: 'POST',
-            body,
+            body: transformed,
             json: true
         };
 
         const res = await this._req(data);
+
+        if (res.result !== 'OK') {
+            throw new Error(`Daktela error: ${res.error || 'unknown error'}`);
+        }
 
         return res;
     }

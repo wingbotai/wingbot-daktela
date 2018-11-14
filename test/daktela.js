@@ -8,7 +8,7 @@ const {
 const Daktela = require('../src/Daktela');
 
 function createSendMock () {
-    return sinon.spy(data => Promise.resolve(data));
+    return sinon.spy(data => Promise.resolve({ result: 'OK', data }));
 }
 
 const SENDER_ID = 'senderid';
@@ -115,7 +115,7 @@ describe('<Daktela>', () => {
                 button: { name: '["start"]' }
             }));
 
-            assert.deepEqual(JSON.parse(requestLib.getCall(0).args[0].body), {
+            assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 text: 'Started',
                 quickreply: [
                     {
@@ -135,7 +135,7 @@ describe('<Daktela>', () => {
                 text: 'Foo'
             }));
 
-            assert.deepEqual(JSON.parse(requestLib.getCall(0).args[0].body), {
+            assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 text: 'Button text',
                 button: [
                     {
@@ -158,7 +158,7 @@ describe('<Daktela>', () => {
                 text: 'Foo BAR'
             }));
 
-            assert.deepEqual(JSON.parse(requestLib.getCall(0).args[0].body), {
+            assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 transfer: 123,
                 conversation: { name: SENDER_ID }
             });
@@ -170,7 +170,7 @@ describe('<Daktela>', () => {
                 terminate: 123
             }));
 
-            assert.deepEqual(JSON.parse(requestLib.getCall(0).args[0].body), {
+            assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 text: '{"terminate":123}',
                 conversation: { name: SENDER_ID }
             });
