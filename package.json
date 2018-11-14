@@ -1,0 +1,56 @@
+{
+  "name": "wingbot-daktela",
+  "version": "0.0.1",
+  "description": "Daktela connector for wingbot.ai",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "npm run test:lint && npm run test:coverage && npm run test:coverage:threshold",
+    "test:unit": "mocha ./test/**/*.test.js",
+    "test:unit:watch": "npm run test:unit -- --watch",
+    "test:coverage": "nyc --reporter=html mocha --opts ./test/mocha.opts ./test && nyc report",
+    "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 75",
+    "test:lint": "eslint ./src/**/*.js ./bin/**/*.js ./test/**/*.js ",
+    "doc": "node ./bin/makeApiDoc.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/wingbotai/wingbot-daktela.git"
+  },
+  "keywords": [
+    "wingbot",
+    "daktela",
+    "chatbot",
+    "framework"
+  ],
+  "author": "wingbot.ai",
+  "license": "MIT",
+  "engines": {
+    "node": "^8.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/wingbotai/wingbot-daktela/issues"
+  },
+  "homepage": "https://github.com/wingbotai/wingbot-daktela#readme",
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-mocha": "^0.5.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsdoc": "^3.9.1",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-react": "^7.11.1",
+    "jsdoc-to-markdown": "^4.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
+    "sinon": "^7.1.1",
+    "wingbot": "^2.2.0"
+  },
+  "peerDependencies": {
+    "wingbot": "^2.2.0"
+  },
+  "dependencies": {
+    "request": "^2.87.0",
+    "request-promise-native": "^1.0.5"
+  }
+}
