@@ -13,6 +13,7 @@ class DaktelaSender extends ReturnSender {
      *
      * @param {Object} options
      * @param {string} [options.absToken]
+     * @param {Object} options.actionReplacer - conversation termination postback
      * @param {string} userId
      * @param {Object} incommingMessage
      * @param {string} incommingMessage.serviceUrl
@@ -42,10 +43,10 @@ class DaktelaSender extends ReturnSender {
         this._conversation = conversation;
     }
 
-    _transformActionPayload (payload) {
+    async _transformActionPayload (payload) {
         const { action, data } = parseActionPayload({ payload });
 
-        return JSON.stringify([action, data]);
+        return this._options.actionReplacer.actionToReplacement(action, data);
     }
 
     _makeStringId (texts) {
@@ -58,7 +59,7 @@ class DaktelaSender extends ReturnSender {
         return hash.digest('hex');
     }
 
-    _createButton (btn) {
+    async _createButton (btn) {
         switch (btn.type) {
             case 'web_url':
                 return {
@@ -66,11 +67,14 @@ class DaktelaSender extends ReturnSender {
                     url: btn.url,
                     name: this._makeStringId([btn.title, btn.url])
                 };
-            case 'postback':
+            case 'postback': {
+                const name = await this._transformActionPayload(btn.payload);
+
                 return {
                     text: btn.title,
-                    name: this._transformActionPayload(btn.payload)
+                    name
                 };
+            }
             default:
                 return null;
         }
@@ -79,9 +83,9 @@ class DaktelaSender extends ReturnSender {
     /**
      *
      * @param {Object} payload
-     * @returns {Object|null}
+     * @returns {Promise<Object|null>}
      */
-    _transformPayload (payload) {
+    async _transformPayload (payload) {
         // if (payload.sender_action === 'typing_on') {
 
         /**
@@ -111,10 +115,14 @@ class DaktelaSender extends ReturnSender {
                     buttons = []
                 } = message.attachment.payload;
 
+                const button = await Promise.all(
+                    buttons
+                        .map(btn => this._createButton(btn))
+                );
+
                 const ret = {
                     text,
-                    button: buttons
-                        .map(btn => this._createButton(btn))
+                    button: button
                         .filter(btn => btn !== null)
                 };
 
@@ -133,11 +141,17 @@ class DaktelaSender extends ReturnSender {
             };
 
             if (message.quick_replies) {
-                const quickreply = message.quick_replies
-                    .map(qr => ({
-                        text: qr.title,
-                        name: this._transformActionPayload(qr.payload)
-                    }));
+                const quickreply = await Promise.all(
+                    message.quick_replies
+                        .map(async (qr) => {
+                            const name = await this._transformActionPayload(qr.payload);
+
+                            return {
+                                text: qr.title,
+                                name
+                            };
+                        })
+                );
 
                 Object.assign(ret, { quickreply });
             }
@@ -148,13 +162,15 @@ class DaktelaSender extends ReturnSender {
     }
 
     async _send (payload) {
-        const transformed = this._transformPayload(payload);
+        let transformed = await this._transformPayload(payload);
 
         if (!transformed) {
             return null;
         }
 
-        Object.assign(transformed, {
+        transformed = Object.assign({
+            quickreply: []
+        }, transformed, {
             conversation: {
                 name: this._conversation.name
             }

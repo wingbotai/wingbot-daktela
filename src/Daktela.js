@@ -8,6 +8,22 @@ const request = require('request-promise-native');
 const DaktelaSender = require('./DaktelaSender');
 
 /**
+ * @typedef {Object} ActionReplacer
+ */
+const actionReplacer = {
+    async actionToReplacement (action, data) {
+        const buf = Buffer.from(JSON.stringify([action, data]));
+
+        return buf.toString('base64');
+    },
+    async replacementToAction (replacement) {
+        const buf = Buffer.from(replacement, 'base64');
+        const [action, data = {}] = JSON.parse(buf.toString('utf8'));
+        return { action, data };
+    }
+};
+
+/**
  * @typedef {Object} Processor
  * @param {Function} processMessage
  */
@@ -24,6 +40,8 @@ class Daktela {
      * @param {Processor} processor - wingbot Processor instance
      * @param {Object} options
      * @param {string} [options.terminateAction] - conversation termination postback
+     * @param {string} [options.welcomeAction] - conversation termination postback
+     * @param {ActionReplacer} [options.actionReplacer] - conversation termination postback
      * @param {string} [options.pageId] - custom page ID
      * @param {Function} [options.requestLib] - request library replacement for testing
      * @param {console} [senderLogger] - optional console like chat logger
@@ -31,7 +49,9 @@ class Daktela {
     constructor (processor, options, senderLogger = null) {
         this._options = {
             terminateAction: null,
-            pageId: 'daktela'
+            pageId: 'daktela',
+            welcomeAction: null,
+            actionReplacer
         };
 
         Object.assign(this._options, options);
@@ -57,9 +77,7 @@ class Daktela {
      * @param {string} senderId
      */
     async _createSender (body, senderId) {
-        const opts = {};
-
-        return new DaktelaSender(opts, senderId, body, this._senderLogger, this._request);
+        return new DaktelaSender(this._options, senderId, body, this._senderLogger, this._request);
     }
 
     /**
@@ -79,7 +97,7 @@ class Daktela {
             terminate = null
         } = body;
 
-        if (!name || !time || !conversation || typeof conversation !== 'object') {
+        if (!conversation || typeof conversation !== 'object') {
             return [];
         }
 
@@ -89,7 +107,9 @@ class Daktela {
         let req;
 
         if (button) {
-            const [action, data = {}] = JSON.parse(button.name);
+            const { action, data } = await this._options.actionReplacer
+                .replacementToAction(button.name);
+
             req = Request.postBack(
                 senderId,
                 action,
@@ -99,7 +119,8 @@ class Daktela {
                 timestamp
             );
         } else if (quickreply) {
-            const [action, data = {}] = JSON.parse(quickreply.name);
+            const { action, data } = await this._options.actionReplacer
+                .replacementToAction(quickreply.name);
 
             if (text) {
                 req = Request.quickReplyText(
@@ -131,6 +152,17 @@ class Daktela {
                 text,
                 timestamp
             );
+        } else if (!name && !time && this._options.welcomeAction) {
+            // the start event
+
+            req = Request.postBack(
+                senderId,
+                this._options.welcomeAction,
+                {},
+                null,
+                {},
+                timestamp
+            );
         }
 
         if (!req) {
@@ -145,8 +177,8 @@ class Daktela {
     }
 
     _createTimestamp (time, name) {
-        const date = new Date(time);
-        const [, ms = '0'] = name
+        const date = new Date(time || Date.now());
+        const [, ms = '0'] = (name || '000')
             .replace(/[^0-9]+/g, '')
             .match(/([0-9]{1,3})?$/);
 
@@ -156,7 +188,7 @@ class Daktela {
     }
 
     /**
-     * Verify Facebook webhook event
+     * Verify webhook event
      *
      * @param {Object} body - parsed request body
      * @param {Object} headers - request headers

@@ -112,7 +112,7 @@ describe('<Daktela>', () => {
 
         it('accepts postbacks', async () => {
             await da.processEvent(daktelaRequest({
-                button: { name: '["start"]' }
+                button: { name: Buffer.from('["start"]').toString('base64') }
             }));
 
             assert.deepEqual(requestLib.getCall(0).args[0].body, {
@@ -120,7 +120,7 @@ describe('<Daktela>', () => {
                 quickreply: [
                     {
                         text: 'Foo',
-                        name: '["/qrAction",{}]'
+                        name: Buffer.from('["/qrAction",{}]').toString('base64')
                     }
                 ],
                 conversation: { name: SENDER_ID }
@@ -131,12 +131,13 @@ describe('<Daktela>', () => {
 
         it('accepts quick replies and sends buttons', async () => {
             await da.processEvent(daktelaRequest({
-                quickreply: { name: '["/qrAction",{}]' },
+                quickreply: { name: Buffer.from('["/qrAction",{}]').toString('base64') },
                 text: 'Foo'
             }));
 
             assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 text: 'Button text',
+                quickreply: [],
                 button: [
                     {
                         text: 'url btn title',
@@ -145,7 +146,7 @@ describe('<Daktela>', () => {
                     },
                     {
                         text: 'postback title',
-                        name: '["/action",{}]'
+                        name: Buffer.from('["/action",{}]').toString('base64')
                     }
                 ],
                 conversation: { name: SENDER_ID }
@@ -160,6 +161,7 @@ describe('<Daktela>', () => {
 
             assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 transfer: 123,
+                quickreply: [],
                 conversation: { name: SENDER_ID }
             });
             assert.equal(requestLib.getCall(0).args[0].uri, TEST_URL);
@@ -172,6 +174,7 @@ describe('<Daktela>', () => {
 
             assert.deepEqual(requestLib.getCall(0).args[0].body, {
                 text: '{"terminate":123}',
+                quickreply: [],
                 conversation: { name: SENDER_ID }
             });
             assert.equal(requestLib.getCall(0).args[0].uri, TEST_URL);
