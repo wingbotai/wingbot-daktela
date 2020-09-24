@@ -1,6 +1,6 @@
 {
   "name": "wingbot-daktela",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.1",
   "description": "Daktela connector for wingbot.ai",
   "main": "src/main.js",
   "scripts": {
@@ -44,10 +44,10 @@
     "mocha": "^6.2.2",
     "nyc": "^14.1.1",
     "sinon": "^7.2.4",
-    "wingbot": "^2.7.0"
+    "wingbot": "^3.6.0-alpha.18"
   },
   "peerDependencies": {
-    "wingbot": "^2.2.0"
+    "wingbot": ">=2.2.0"
   },
   "dependencies": {
     "request": "^2.88.0",

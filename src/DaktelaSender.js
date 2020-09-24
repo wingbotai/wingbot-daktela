@@ -44,9 +44,9 @@ class DaktelaSender extends ReturnSender {
     }
 
     async _transformActionPayload (payload) {
-        const { action, data } = parseActionPayload({ payload });
+        const { action, data, setState } = parseActionPayload({ payload });
 
-        return this._options.actionReplacer.actionToReplacement(action, data);
+        return this._options.actionReplacer.actionToReplacement(action, data, setState);
     }
 
     _makeStringId (texts) {

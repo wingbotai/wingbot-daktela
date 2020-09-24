@@ -107,36 +107,38 @@ class Daktela {
         let req;
 
         if (button) {
-            const { action, data } = await this._options.actionReplacer
+            const { action, data, setState } = await this._options.actionReplacer
                 .replacementToAction(button.name);
 
-            req = Request.postBack(
-                senderId,
-                action,
-                data,
-                null,
-                {},
-                timestamp
-            );
-        } else if (quickreply) {
-            const { action, data } = await this._options.actionReplacer
-                .replacementToAction(quickreply.name);
-
-            if (text) {
-                req = Request.quickReplyText(
-                    senderId,
-                    text,
-                    JSON.stringify({ action, data }),
-                    timestamp
-                );
-            } else {
-                req = Request.quickReply(
+            if (setState) {
+                req = Request.postBackWithSetState(
                     senderId,
                     action,
                     data,
+                    setState,
+                    timestamp
+                );
+            } else {
+                req = Request.postBack(
+                    senderId,
+                    action,
+                    data,
+                    null,
+                    {},
                     timestamp
                 );
             }
+
+        } else if (quickreply) {
+            const { action, data, setState } = await this._options.actionReplacer
+                .replacementToAction(quickreply.name);
+
+            req = Request.quickReplyText(
+                senderId,
+                text || action,
+                JSON.stringify({ action, data, setState }),
+                timestamp
+            );
         } else if (terminate && this._options.terminateAction) {
             req = Request.postBack(
                 senderId,
